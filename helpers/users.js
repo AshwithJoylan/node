@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const slt = process.env.SALT || 'xxi93jk67k3j';
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 const generateSalt = (rounds) => {
   if (rounds >= 15) {
     throw new Error(`${rounds} is greater than 15,Must be less that 15`);
@@ -40,19 +41,6 @@ const hash = (password, salt = slt) => {
 };
 
 module.exports = {
-  authenticateToken: (req, res, next) => {
-    // Gather the jwt access token from the request header
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (token == null) return res.sendStatus(401); // if there isn't any token
-
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-      console.log(err);
-      if (err) return res.sendStatus(403);
-      req.user = user;
-      next(); // pass the execution off to whatever request the client intended
-    });
-  },
   compare: (password, hashedPassword, salt = slt) => {
     if (password == null || hash == null) {
       throw new Error('password and hash is required to compare');
@@ -71,5 +59,26 @@ module.exports = {
   },
   generatePasswordHash: (password) => {
     return hash(password);
+  },
+  authenticateToken: async (req, res, next) => {
+    // Gather the jwt access token from the request header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token == null) return res.sendStatus(401); // if there isn't any token
+
+    try {
+      const { id } = await jwt.verify(token, '21km2b82329bjjsaz');
+
+      if (!id) {
+        return res.status(401).json({ error: 'Failed to Authenticate' });
+      }
+
+      const user = await User.findById(id);
+
+      req.user = user;
+      next(); // pass the execution off to whatever request the client intended
+    } catch (error) {
+      res.status(403).json({ error: 'Failed to Authenticate' });
+    }
   },
 };

@@ -62,8 +62,10 @@ const UserController = {
     }
   },
   getAllUsers: async (req, res, next) => {
+    const user = req.user;
+
     try {
-      const users = await User.find({});
+      const users = await User.find({ _id: { $ne: user.id } });
       res.status(200).json({
         users,
         length: users.length,
