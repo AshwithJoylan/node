@@ -8,6 +8,8 @@ const User = require('../models/User');
 const UserController = {
   register: async (req, res, next) => {
     const { email, password: pass, name } = req.body;
+
+    console.log(email, pass, name);
     // Check if user exists
     const user = await User.findOne({ email });
     console.log('user:', user);
@@ -72,6 +74,14 @@ const UserController = {
       });
     } catch (error) {
       res.status(500).json({ error });
+    }
+  },
+  delateAllUsers: async (req, res, next) => {
+    try {
+      await User.deleteMany({});
+      res.status(200).json('Successfully deleted all users');
+    } catch (error) {
+      res.status(400).json({ error });
     }
   },
 };
